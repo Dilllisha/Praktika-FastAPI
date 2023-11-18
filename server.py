@@ -1,4 +1,3 @@
-from sqlalchemy.orm import Session
 from fastapi import *
 from tables import *
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-db = SessionLocal()
+
 
 origins = ["*"]
 app.add_middleware(
@@ -18,21 +17,12 @@ app.add_middleware(
 )
 
 
-@app.get("/items")
-def get_items():
-    items = db.query(Items).all()
-    return items
-
-
-# @app.get("/categories")
-# def get_categories():
-#     sub = db.query(SubCategories).join(Categories, SubCategories.category_id == Categories.category_id)
-#     cat = db.query(Categories).join(SubCategories, SubCategories.category_id == Categories.category_id)
-#     rec = cat.all(), sub.all()
-#     return cat.all(), sub.all()
-
 @app.get("/categories")
 def get_categories():
-    a = db.query(Categories).outerjoin(SubCategories, Categories.category_id  == SubCategories.category_id)
-    #
-    # return a.all()
+    cat = (db.query(Categories).join(SubCategories, Categories.category_id == SubCategories.category_id)
+           .filter(Categories.category_id == SubCategories.category_id))
+    sub = (db.query(SubCategories).join(Categories, Categories.category_id == SubCategories.category_id)
+           .filter(Categories.category_id == SubCategories.category_id))
+    item = db.query(Items).join(SubCategories, Items.subcategory_id == SubCategories.subcategories_id)
+    return cat.all(), sub.all(), item.all()
+
